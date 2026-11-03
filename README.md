@@ -320,6 +320,58 @@ python evaluate.py --scenario my_scene --planner baseline student
 
 **5.** Make it harder using section 6 of [SCENARIO_GUIDE.md](SCENARIO_GUIDE.md), check that it is fair using section 7, and repeat.
 
+## Example: keep your scenes in your own file
+
+A few scenes fit fine in `student_scenario.py`. For a larger set, or to keep each team's work apart, use your own file. Here is a complete example for a team called `team_b`.
+
+**1.** Create a new file in the `scenarios` folder:
+
+```
+scenarios/
+    team_b_scenarios.py     <- new: your scenes
+    student_scenario.py     <- already there: connect your scenes here
+```
+
+**2.** Put your scene in `scenarios/team_b_scenarios.py`:
+
+```python
+"""Team B's scenes."""
+
+from scenarios.scenario_tools import LEFT_LANE, MPH, RIGHT_LANE, Scenario, car, curved_two_lane_road, truck
+
+
+def truck_on_curve() -> Scenario:
+    """A slow truck on an S-curve, with traffic passing in the left lane."""
+    return Scenario(
+        name="truck_on_curve",
+        description="Slow truck on an S-curve; a faster car passes in the left lane",
+        road=curved_two_lane_road(), route=("curved_road:F2",),
+        ego_start_s_m=30.0, ego_speed_mps=8.0, desired_speed_mps=8.0, speed_limit_mps=25 * MPH,
+        goal_distance_m=200.0, time_limit_s=45.0,
+        actors=(truck(1, s_m=70.0, offset_m=RIGHT_LANE, speed_mps=5.0),
+                car(2, s_m=0.0, offset_m=LEFT_LANE, speed_mps=11.0)))
+```
+
+**3.** Connect it in `scenarios/student_scenario.py`. Add one line after the other imports at the top, and one line at the bottom:
+
+```python
+from scenarios.team_b_scenarios import truck_on_curve        # add this line at the top
+
+STUDENT_SCENARIOS = {
+    "my_crosswalk": my_crosswalk,
+    "truck_on_curve": truck_on_curve,                        # add this line
+}
+```
+
+**4.** Run it:
+
+```bash
+python run_simulation.py --scenario truck_on_curve
+python evaluate.py --scenario truck_on_curve --planner baseline student
+```
+
+Both planners score 94.0. If `student` were the only planner on the other team, the scene score would only be 6, so this scene is too easy. It is a starting point for you to make harder.
+
 ## Rules for scenes
 
 * Road users must not overlap at the start.
@@ -379,12 +431,68 @@ The trajectory gives the position of the car's **rear axle** in the car's own fr
 | **Use your own generator** | Put your code and a thin adapter in `planners/<team>/` | [PLANNER_GUIDE.md](PLANNER_GUIDE.md), section 8 |
 | **Train a neural network** | Follow `planners/learned_example/` | [LEARNING_GUIDE.md](LEARNING_GUIDE.md) |
 
-To add a new planner, register it in `planners/__init__.py`, then use it with `--planner team_a`:
+## Example: create your own planner
+
+Here is a complete planner that runs, for a team called `team_a`. To work in `student_planner.py` instead, you can skip steps 1 and 3.
+
+**1.** Create a folder with two files in it:
+
+```
+planners/
+    team_a/
+        __init__.py     an empty file; it just has to exist
+        planner.py      your planner
+```
+
+**2.** Put this in `planners/team_a/planner.py`:
 
 ```python
-from planners.team_a.planner import TeamAPlanner
-PLANNERS["team_a"] = TeamAPlanner
+"""Team A's planner: stay in the lane and follow the car ahead."""
+
+from planners.planner_tools import build_trajectory, find_lead, lateral_profile, speed_profile, time_grid
+
+
+class TeamAPlanner:
+    def __init__(self):
+        self.t = time_grid(horizon_s=4.0, dt_s=0.1)      # plan 4 s ahead, one point every 0.1 s
+
+    def plan(self, obs):
+        lane = obs.lanes["current"]                      # the lane we are driving in
+        lead = find_lead(lane, obs.actors)               # the vehicle ahead of us, if any
+
+        # How far to drive, and how fast: cruise, but slow down for the vehicle ahead
+        s, v, a = speed_profile(self.t, obs.ego.speed_mps, obs.ego.acceleration_mps2,
+                                obs.desired_speed_mps, lane=lane, lead=lead)
+
+        # Where to be sideways: steer smoothly to the lane centre (offset 0)
+        d = lateral_profile(lane.ego_d_m, 0.0, 0.0, max(8.0, 1.5 * obs.ego.speed_mps), s)
+
+        # Turn these into the x, y and speed points the simulator needs
+        return build_trajectory(lane, self.t, s, d, v, a, behavior="KEEP_LANE")
 ```
+
+**3.** Register it in `planners/__init__.py` by adding the two marked lines:
+
+```python
+from planners.baseline_planner import BaselinePlanner
+from planners.student_planner import StudentPlanner
+from planners.team_a.planner import TeamAPlanner         # add this line
+
+PLANNERS = {
+    "baseline": BaselinePlanner,
+    "student": StudentPlanner,
+    "team_a": TeamAPlanner,                              # add this line
+}
+```
+
+**4.** Run it:
+
+```bash
+python run_simulation.py --scenario lane_change_overtake --planner team_a
+python evaluate.py --planner baseline team_a
+```
+
+It scores 228.5 out of 400 on the four shipped scenes, because it never overtakes and crashes at the junction. It also ignores traffic lights; `student_planner.py` shows how to stop for them. Those are the problems for you to solve.
 
 ## Test your planner
 
