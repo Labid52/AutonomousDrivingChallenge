@@ -42,9 +42,9 @@ assert score.score(site) == 4 + 4                           # baseline x4 scenes
 results = json.loads((site / "results.json").read_text())
 crosswalk = results["runs"]["team_7@abcdef1|team_1@abcdef1/my_crosswalk"]["score"]
 page = (site / "index.html").read_text()
-assert "team_7 (abcdef1)" in page and "team_1 (abcdef1)" in page
-assert f"my_crosswalk:\n{100 - crosswalk:.1f}" in page
-assert "non-empty STUDENT_SCENARIOS" in page and "no code uploaded yet" in page
+assert "team_7<small>abcdef1</small>" in page and "team_1<small>abcdef1</small>" in page
+assert f">{100 - crosswalk:.1f}</b>" in page                # my_crosswalk's scene score
+assert "non-empty STUDENT_SCENARIOS" in page and "waiting for the first upload" in page
 
 os.environ["PREVIOUS_RESULTS_URL"] = (site / "results.json").as_uri()
 assert score.score(site) == 0                               # nothing changed: nothing re-run
