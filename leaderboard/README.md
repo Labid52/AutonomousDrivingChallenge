@@ -20,7 +20,7 @@ Each team has its own private GitHub repo and uploads its code there. Every 30 m
    * Repository access: only the 12 team repos.
    * Permissions: *Contents → Read-only*.
    * Expiration: after your final grading.
-4. **Store the key** in the repo that holds this leaderboard: *Settings → Secrets and variables → Actions → New repository secret*. Name it `TEAM_REPOS_TOKEN`.
+4. **Store the key** in the repo that holds this leaderboard: *Settings → Secrets and variables → Actions → New repository secret*. Name it `final` (the workflow reads `secrets.FINAL`).
 5. **Turn on the website:** *Settings → Pages → Source: GitHub Actions*.
 6. **Run it once:** *Actions → Leaderboard → Run workflow*. The site appears at `https://<owner>.github.io/<repo>/`.
 

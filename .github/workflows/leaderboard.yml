@@ -29,7 +29,7 @@ jobs:
       - name: Score teams (student code runs only inside Docker, without network)
         run: python leaderboard/score.py site
         env:
-          TEAM_REPOS_TOKEN: ${{ secrets.TEAM_REPOS_TOKEN }}
+          TEAM_REPOS_TOKEN: ${{ secrets.FINAL }}   # the repo secret is named "final"
           PREVIOUS_RESULTS_URL: ${{ steps.pages.outputs.base_url }}/results.json
       - uses: actions/upload-pages-artifact@v3
         with:
