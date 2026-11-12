@@ -69,7 +69,7 @@ def prepare(kind: str, d: Path):
 # ---------------------------------------------------------------------------
 @functools.cache
 def build_image():
-    subprocess.run(["docker", "build", "-q", "-t", IMAGE, str(HERE)], check=True)
+    subprocess.run(["docker", "build", "-t", IMAGE, str(HERE)], check=True)
 
 
 def run_job(args, subs=()):
