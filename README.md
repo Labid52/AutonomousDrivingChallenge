@@ -252,6 +252,15 @@ The team score is (61.95 + 50.00 + 31.50 + 1.35) ÷ 4 = **36.2**.
 python evaluate.py --scenario my_scene --planner baseline team_a team_b
 ```
 
+## 7. Submitting your code and the leaderboard
+
+Each team has a private GitHub repo, `adc-team-N`, and the instructor adds you to it. Its README says exactly what to upload. On GitHub, click **Add file → Upload files**, drag in your files and click **Commit changes**.
+
+* **Scene Generation (teams 1–6):** upload `scenes.py`, which defines `STUDENT_SCENARIOS`.
+* **Trajectory Planning (teams 7–12):** upload the contents of your `planners/team_N/` folder, including `planner.py`.
+
+Every 30 minutes, the **[leaderboard](https://labid52.github.io/AutonomousDrivingChallenge/)** scores every team's latest upload with the rules above. If something is wrong with your upload, its **Team status** table tells you what.
+
 ---
 
 # Scene Generation Group
