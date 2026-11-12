@@ -1,6 +1,6 @@
 # Leaderboard (for the instructor)
 
-Each team has its own private GitHub repo and uploads its code there. Every 30 minutes, a GitHub Action scores every team's latest code with the simulator and publishes the leaderboard as a GitHub Pages website. There is no server to run.
+Each team has its own private GitHub repo and uploads its code there. Every 5 minutes (the shortest interval GitHub allows), a GitHub Action scores every team's latest code with the simulator and publishes the leaderboard as a GitHub Pages website. There is no server to run.
 
 | File | What it does |
 |---|---|
@@ -8,7 +8,7 @@ Each team has its own private GitHub repo and uploads its code there. Every 30 m
 | `score.py` | Downloads the team repos, runs everything that is new, writes `index.html` and `results.json` |
 | `runner.py` | Runs one simulation inside the sandbox |
 | `Dockerfile` | The sandbox: student code runs here with no network, 2 GB of memory and 1 CPU |
-| `../.github/workflows/leaderboard.yml` | Runs `score.py` every 30 minutes and publishes the site |
+| `../.github/workflows/leaderboard.yml` | Runs `score.py` every 5 minutes and publishes the site |
 
 ## One-time setup
 
@@ -33,7 +33,7 @@ Open their team repo on GitHub, click **Add file → Upload files**, drag in the
 | Scene Generation (1–6) | `scenes.py`, which defines `STUDENT_SCENARIOS` and imports only from `scenarios.scenario_tools` |
 | Trajectory Planning (7–12) | The contents of their `planners/team_N/` folder, at least `planner.py` with exactly one planner class. Imports inside their own code must use `planners.team_N...` |
 
-The leaderboard updates within about 30 minutes. If something is wrong with an upload, the **Team status** table on the site says what.
+The leaderboard updates within about 5–10 minutes. If something is wrong with an upload, the **Team status** table on the site says what.
 
 ## How scores are computed
 

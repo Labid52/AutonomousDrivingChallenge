@@ -1,6 +1,6 @@
 # Submission Guide: uploading your code to the leaderboard
 
-Every team has its own **private GitHub repo**. You upload your code there. About every 30 minutes, the leaderboard downloads every team's latest code, scores it with the simulator and updates the website:
+Every team has its own **private GitHub repo**. You upload your code there. About every 5 minutes, the leaderboard downloads every team's latest code, scores it with the simulator and updates the website:
 
 **Leaderboard: https://labid52.github.io/AutonomousDrivingChallenge/**
 
@@ -103,7 +103,7 @@ Only your team's **latest** upload counts.
 
 ## Step 4. Check your score
 
-1. Wait up to about **30 minutes**. GitHub sometimes starts the update a few minutes late.
+1. Wait about **5–10 minutes**. The update runs every 5 minutes, and GitHub sometimes starts it a few minutes late.
 2. Open the [leaderboard](https://labid52.github.io/AutonomousDrivingChallenge/) and scroll to **Team status**:
    * **✓ scored** with a 7-character code means it worked. The code matches your latest commit, which appears on your repo page next to the commit message. If it shows an older code, the update hasn't run yet.
    * **Red text** means something went wrong. See the table below.

@@ -241,7 +241,7 @@ def render(subs, scenes, valid, planners, runs) -> str:
 
 PAGE = """<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Driving Challenge Leaderboard</title>
+<meta http-equiv="refresh" content="60"><title>Driving Challenge Leaderboard</title>
 <style>
 :root{--bg:#f4f6fa;--card:#fff;--ink:#14181f;--muted:#5d6675;--line:#e3e7ee;--accent:#2f6fed;--bad:#c62828;
  --hero1:#14213d;--hero2:#2f6fed;--heat-l:88%;--heat-s:75%;--gold:#e9b824;--silver:#a7b0bc;--bronze:#c98a52}
@@ -303,7 +303,7 @@ footer{color:var(--muted);font-size:13px;padding:10px 0 40px}
 <header><div class="wrap">
   <p class="eyebrow">Final project leaderboard</p>
   <h1>Autonomous Driving Challenge</h1>
-  <p class="sub">Updated {{ updated }} · refreshes about every 30 minutes</p>
+  <p class="sub">Updated {{ updated }} · scores update every 5 minutes; this page reloads every minute</p>
   <div class="stats">
     <div><b>{{ valid|length }}</b><span>scenes in the test set</span></div>
     <div><b>{{ planner_rows|length - 1 }}</b><span>planning teams scored</span></div>

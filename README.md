@@ -260,7 +260,7 @@ Each team has a private GitHub repo, `adc-team-N`, and the instructor adds you t
 * **Scene Generation (teams 1–6):** upload `scenes.py`, which defines `STUDENT_SCENARIOS`.
 * **Trajectory Planning (teams 7–12):** upload the contents of your `planners/team_N/` folder, including `planner.py`.
 
-Every 30 minutes, the **[leaderboard](https://labid52.github.io/AutonomousDrivingChallenge/)** scores every team's latest upload with the rules above. If something is wrong with your upload, its **Team status** table tells you what.
+Every 5 minutes, the **[leaderboard](https://labid52.github.io/AutonomousDrivingChallenge/)** scores every team's latest upload with the rules above. If something is wrong with your upload, its **Team status** table tells you what.
 
 **Full step-by-step instructions, with fixes for common errors: [SUBMISSION_GUIDE.md](SUBMISSION_GUIDE.md).**
 

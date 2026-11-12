@@ -4,7 +4,7 @@ name: Leaderboard
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "*/5 * * * *"   # GitHub's shortest allowed interval
   workflow_dispatch:
 
 concurrency:
