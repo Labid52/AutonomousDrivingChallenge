@@ -143,7 +143,7 @@ def score(site: Path) -> int:
     for team, info in TEAMS.items():
         d = work / team
         sha = fetch(team, info, d)
-        if sha:
+        if sha and any(not p.name.lower().startswith("readme") for p in d.iterdir()):   # not just our README
             subs[team] = dict(team=team, kind=info["kind"], dir=d, sha=sha, key=f"{team}@{sha[:7]}",
                               error=prepare(info["kind"], d))
 

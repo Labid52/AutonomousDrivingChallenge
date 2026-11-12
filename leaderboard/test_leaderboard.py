@@ -23,6 +23,8 @@ shutil.copy(ROOT / "planners/student_planner.py", tmp / "team_7/team_7/planner.p
 shutil.copy(ROOT / "scenarios/student_scenario.py", tmp / "team_1/scenes.py")
 (tmp / "team_2").mkdir()
 (tmp / "team_2/scenes.py").write_text("STUDENT_SCENARIOS = {}\n")   # broken upload
+(tmp / "team_3").mkdir()
+(tmp / "team_3/README.md").write_text("upload here")          # repo with only our README: not uploaded yet
 
 score.TEAMS = {"team_1": {"kind": "scenes", "repo": "x/1"}, "team_2": {"kind": "scenes", "repo": "x/2"},
                "team_3": {"kind": "scenes", "repo": "x/3"}, "team_7": {"kind": "planner", "repo": "x/7"}}
@@ -30,7 +32,7 @@ score.TEAMS = {"team_1": {"kind": "scenes", "repo": "x/1"}, "team_2": {"kind": "
 
 def fake_fetch(team, info, dest):
     if not (tmp / team).exists():
-        return None                                         # team_3 has not uploaded anything
+        return None
     shutil.copytree(tmp / team, dest)
     return "abcdef1234" + team
 
