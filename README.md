@@ -176,6 +176,7 @@ python training/train.py            # train the example network
 |---|---|---|
 | [CLAUDE_CODE_TUTORIAL.md](CLAUDE_CODE_TUTORIAL.md) | Installing Claude Code on Windows or Mac, writing prompts, and using it to build a scene and train a planner | Everyone |
 | [COMPETITION_RULES.md](COMPETITION_RULES.md) | What each group may change, fair play and the submission checklist | Everyone |
+| [SUBMISSION_GUIDE.md](SUBMISSION_GUIDE.md) | Step by step: getting access to your team repo, uploading your code and reading the leaderboard | Everyone |
 | [SCENARIO_GUIDE.md](SCENARIO_GUIDE.md) | How to build scenes: roads, road users, traffic lights, making scenes harder, checking they are fair | Scene Generation Group |
 | [PLANNER_GUIDE.md](PLANNER_GUIDE.md) | How to write a planner: coordinates, observation, trajectory, controller, helpers, how the baseline works, using your own generator | Trajectory Planning Group |
 | [LEARNING_GUIDE.md](LEARNING_GUIDE.md) | How to train a neural-network planner, anywhere, so that its weights work here | Trajectory Planning Group, if using machine learning |
@@ -260,6 +261,8 @@ Each team has a private GitHub repo, `adc-team-N`, and the instructor adds you t
 * **Trajectory Planning (teams 7–12):** upload the contents of your `planners/team_N/` folder, including `planner.py`.
 
 Every 30 minutes, the **[leaderboard](https://labid52.github.io/AutonomousDrivingChallenge/)** scores every team's latest upload with the rules above. If something is wrong with your upload, its **Team status** table tells you what.
+
+**Full step-by-step instructions, with fixes for common errors: [SUBMISSION_GUIDE.md](SUBMISSION_GUIDE.md).**
 
 ---
 
