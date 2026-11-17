@@ -4,7 +4,7 @@ name: Leaderboard
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # GitHub's shortest allowed interval
+    - cron: "0 * * * *"   # backup only: GitHub delays schedules by hours; the `next` job below keeps it running
   workflow_dispatch:
 
 concurrency:
@@ -47,3 +47,16 @@ jobs:
     steps:
       - id: deploy
         uses: actions/deploy-pages@v4
+
+  # Starts the next run about a minute after this one, so scores update every ~3 minutes.
+  # The concurrency group keeps at most one run waiting. To stop: Actions -> Leaderboard -> Disable workflow.
+  next:
+    needs: [score, deploy]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - run: sleep 60 && gh workflow run leaderboard.yml -R "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ github.token }}

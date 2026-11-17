@@ -1,6 +1,6 @@
 # Leaderboard (for the instructor)
 
-Each team has its own private GitHub repo and uploads its code there. Every 5 minutes (the shortest interval GitHub allows), a GitHub Action scores every team's latest code with the simulator and publishes the leaderboard as a GitHub Pages website. There is no server to run.
+Each team has its own private GitHub repo and uploads its code there. About every 3 minutes, a GitHub Action scores every team's latest code with the simulator and publishes the leaderboard as a GitHub Pages website. There is no server to run.
 
 | File | What it does |
 |---|---|
@@ -8,7 +8,7 @@ Each team has its own private GitHub repo and uploads its code there. Every 5 mi
 | `score.py` | Downloads the team repos, runs everything that is new, writes `index.html` and `results.json` |
 | `runner.py` | Runs one simulation inside the sandbox |
 | `Dockerfile` | The sandbox: student code runs here with no network, 2 GB of memory and 1 CPU |
-| `../.github/workflows/leaderboard.yml` | Runs `score.py` every 5 minutes and publishes the site |
+| `../.github/workflows/leaderboard.yml` | Runs `score.py`, publishes the site, then starts itself again a minute later. An hourly schedule restarts it if the chain ever breaks |
 
 ## One-time setup
 
@@ -48,3 +48,7 @@ Results are reused between runs. A run only simulates the (planner, scene) pairs
 ## Test
 
 `python leaderboard/test_leaderboard.py` scores a sample planner team and a sample scene team on your own computer, without Docker or GitHub. It takes about 30 seconds and needs `pip install jinja2`.
+
+## Stopping it
+
+Each run starts the next one, so the leaderboard keeps updating until you stop it. After final grading, open *Actions → Leaderboard → ⋯ → Disable workflow* in the challenge repo. The website stays online, showing the last scores.
