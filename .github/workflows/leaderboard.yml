@@ -16,6 +16,8 @@ jobs:
     permissions:
       contents: read
       pages: read
+    outputs:
+      changed: ${{ steps.score.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -27,16 +29,20 @@ jobs:
       - id: pages
         uses: actions/configure-pages@v5
       - name: Score teams (student code runs only inside Docker, without network)
+        id: score
         run: python leaderboard/score.py site
         env:
           TEAM_REPOS_TOKEN: ${{ secrets.FINAL }}   # the repo secret is named "final"
           PREVIOUS_RESULTS_URL: ${{ steps.pages.outputs.base_url }}/results.json
       - uses: actions/upload-pages-artifact@v3
+        if: steps.score.outputs.changed == 'true'
         with:
           path: site
 
+  # Only deploy when the scores changed: GitHub Pages silently ignores deploys once there are too many.
   deploy:
     needs: score
+    if: needs.score.outputs.changed == 'true'
     runs-on: ubuntu-latest
     permissions:
       pages: write
@@ -57,6 +63,9 @@ jobs:
     permissions:
       actions: write
     steps:
-      - run: sleep 60 && gh workflow run leaderboard.yml -R "$GITHUB_REPOSITORY"
+      - run: |   # retried, so one GitHub server error does not stop the chain
+          sleep 60
+          for i in 1 2 3 4 5 6; do gh workflow run leaderboard.yml -R "$GITHUB_REPOSITORY" && exit 0; sleep 30; done
+          exit 1
         env:
           GH_TOKEN: ${{ github.token }}

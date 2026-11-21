@@ -136,6 +136,7 @@ def score(site: Path) -> int:
     """Updates the site; returns how many simulations were run."""
     core = core_version()
     cache = previous_results(core)
+    before = json.dumps(cache, sort_keys=True)
     lists, runs = {}, {}                                 # only what is still current is kept
     work = Path(tempfile.mkdtemp(prefix="adc_teams_"))
 
@@ -189,9 +190,16 @@ def score(site: Path) -> int:
     shutil.rmtree(work, ignore_errors=True)
 
     site.mkdir(parents=True, exist_ok=True)
-    (site / "results.json").write_text(json.dumps({"core": core, "lists": lists, "runs": runs}))
+    data = {"core": core, "lists": lists, "runs": runs,
+            "status": {t: [s["sha"], s["error"]] for t, s in subs.items()}}
+    (site / "results.json").write_text(json.dumps(data))
     (site / "index.html").write_text(render(subs, scenes, valid, planners, runs))
-    print(f"ran {count} simulations; {len(valid)} valid scenes, {len(planners) - 1} planner teams")
+    # GitHub Pages silently drops deploys when there are too many, so the workflow deploys only on a change.
+    changed = json.dumps(data, sort_keys=True) != before
+    if os.environ.get("GITHUB_OUTPUT"):
+        with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+            f.write(f"changed={str(changed).lower()}\n")
+    print(f"ran {count} simulations; {len(valid)} valid scenes, {len(planners) - 1} planner teams; changed={changed}")
     return count
 
 
@@ -303,7 +311,7 @@ footer{color:var(--muted);font-size:13px;padding:10px 0 40px}
 <header><div class="wrap">
   <p class="eyebrow">Final project leaderboard</p>
   <h1>Autonomous Driving Challenge</h1>
-  <p class="sub">Updated {{ updated }} · scores update every 5 minutes; this page reloads every minute</p>
+  <p class="sub">Scores last changed {{ updated }} · new uploads are scored within about 5 minutes; this page reloads every minute</p>
   <div class="stats">
     <div><b>{{ valid|length }}</b><span>scenes in the test set</span></div>
     <div><b>{{ planner_rows|length - 1 }}</b><span>planning teams scored</span></div>

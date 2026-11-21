@@ -49,5 +49,7 @@ assert f">{100 - crosswalk:.1f}</b>" in page                # my_crosswalk's sce
 assert "non-empty STUDENT_SCENARIOS" in page and "waiting for the first upload" in page
 
 os.environ["PREVIOUS_RESULTS_URL"] = (site / "results.json").as_uri()
+os.environ["GITHUB_OUTPUT"] = str(site / "out.txt")
 assert score.score(site) == 0                               # nothing changed: nothing re-run
+assert (site / "out.txt").read_text() == "changed=false\n"   # ... and nothing to deploy
 print(f"OK: team_7 on my_crosswalk = {crosswalk:.1f}")
