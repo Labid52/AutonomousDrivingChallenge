@@ -38,6 +38,7 @@ The leaderboard updates within about 5–10 minutes. If something is wrong with 
 ## How scores are computed
 
 * **Test set:** the three example scenes, plus every scene from the scene teams that the baseline solves. The baseline must reach the goal with no collision or road departure.
+* **Baseline scenes:** the scenes in `scenarios/` are also shown as an unranked baseline row in the Scene Generation table. `my_crosswalk` (from `student_scenario.py`) is run with every planner but never counts toward a total, because it isn't in the official test set.
 * **Trajectory Planning:** each team's latest code is run on every scene in the test set, and the team is ranked by its total score. The baseline appears as a reference. The page also shows each team's average `plan()` time and marks it in red above 50 ms.
 * **Scene Generation:** scene score = 100 − the average of the planning teams' scores on that scene, or 0 if the baseline can't solve it. A team's score is the average of its scenes.
 

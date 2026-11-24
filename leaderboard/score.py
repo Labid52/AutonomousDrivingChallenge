@@ -110,6 +110,9 @@ def safe_run(args, subs=()):
         return {"score": 0.0, "error": str(e)}
 
 
+PRACTICE = "student_scenario"      # scenarios/student_scenario.py: shown to everyone, not in the official test set
+
+
 def core_version() -> str:
     """Changes whenever the simulator or the scoring changes, which invalidates every old result."""
     h = hashlib.sha256()
@@ -159,7 +162,10 @@ def score(site: Path) -> int:
     examples = scene_list("example", ["list", "example"], [])
     if isinstance(examples, dict):
         raise SystemExit(f"cannot list the example scenes: {examples['error']}")
-    scenes = [("example", None, n) for n in examples]
+    practice = scene_list(PRACTICE, ["list", PRACTICE], [])
+    if isinstance(practice, dict):
+        raise SystemExit(f"cannot list the practice scenes: {practice['error']}")
+    scenes = [("example", None, n) for n in examples] + [(PRACTICE, None, n) for n in practice]
     for s in subs.values():
         if s["kind"] == "scenes" and not s["error"]:
             names = scene_list(s["key"], ["list", f"upload_{s['team']}"], [s])
@@ -176,7 +182,7 @@ def score(site: Path) -> int:
         with ThreadPoolExecutor(os.cpu_count()) as pool:
             done = pool.map(lambda job: safe_run(
                 ["run", job[0][1]["team"] if job[0][1] else "baseline",
-                 f"upload_{job[1][1]['team']}" if job[1][1] else "example", job[1][2]],
+                 f"upload_{job[1][1]['team']}" if job[1][1] else job[1][0], job[1][2]],
                 [x for x in (job[0][1], job[1][1]) if x]), todo)
             for (p, s), result in zip(todo, done):
                 cache["runs"][f"{p[0]}|{s[0]}/{s[2]}"] = result
@@ -212,11 +218,13 @@ def render(subs, scenes, valid, planners, runs) -> str:
     def name(sub):
         return f"{sub['team']} ({sub['sha'][:7]})" if sub else "baseline (reference)"
 
+    shown, valid = valid, [s for s in valid if s[0] != PRACTICE]   # practice scenes are shown but never counted
     planner_rows = []
     for pkey, psub in planners:
         cells = [runs[f"{pkey}|{s[0]}/{s[2]}"] for s in valid]
         ms = [c["plan_ms_avg"] for c in cells if "plan_ms_avg" in c]
-        planner_rows.append(dict(name=name(psub), reference=not psub, cells=cells,
+        planner_rows.append(dict(name=name(psub), reference=not psub, count=len(cells),
+                                 cells=[runs[f"{pkey}|{s[0]}/{s[2]}"] for s in shown],
                                  total=sum(c["score"] for c in cells), ms=max(ms) if ms else None,
                                  goals=sum(bool(c.get("completed")) for c in cells),
                                  crashes=sum(bool(c.get("collision") or c.get("road_departure")) for c in cells)))
@@ -224,15 +232,13 @@ def render(subs, scenes, valid, planners, runs) -> str:
 
     scene_rows = {}
     for skey, ssub, n in scenes:
-        if not ssub:
-            continue
         baseline = runs[f"baseline|{skey}/{n}"]
         scores = [runs[f"{p}|{skey}/{n}"]["score"] for p, _ in planners[1:]] if is_valid(baseline) else []
         if not is_valid(baseline):
             score = 0.0
         else:
             score = 100 - sum(scores) / len(scores) if scores else None   # None: no planner teams yet
-        row = scene_rows.setdefault(skey, dict(name=name(ssub), scenes=[]))
+        row = scene_rows.setdefault(skey if ssub else "baseline", dict(name=name(ssub), reference=not ssub, scenes=[]))
         row["scenes"].append(dict(name=n, valid=is_valid(baseline), score=score,
                                   why=baseline.get("error") or baseline.get("end_reason")))
     for row in scene_rows.values():
@@ -243,7 +249,7 @@ def render(subs, scenes, valid, planners, runs) -> str:
     status = [dict(team=t, kind=i["kind"], repo=i["repo"], sha=subs[t]["sha"][:7] if t in subs else "",
                    error=subs[t]["error"] if t in subs else "no code uploaded yet") for t, i in TEAMS.items()]
     return jinja2.Environment(autoescape=True).from_string(PAGE).render(
-        valid=valid, planner_rows=planner_rows, scene_rows=scene_rows, status=status,
+        valid=valid, shown=shown, practice=PRACTICE, planner_rows=planner_rows, scene_rows=scene_rows, status=status,
         repo=os.environ.get("GITHUB_REPOSITORY"), updated=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"))
 
 
@@ -315,7 +321,7 @@ footer{color:var(--muted);font-size:13px;padding:10px 0 40px}
   <div class="stats">
     <div><b>{{ valid|length }}</b><span>scenes in the test set</span></div>
     <div><b>{{ planner_rows|length - 1 }}</b><span>planning teams scored</span></div>
-    <div><b>{{ scene_rows|length }}</b><span>scene teams scored</span></div>
+    <div><b>{{ scene_rows|rejectattr('reference')|list|length }}</b><span>scene teams scored</span></div>
   </div>
   <nav><a href="#planning">Trajectory Planning</a><a href="#scenes">Scene Generation</a><a href="#status">Team status</a>
   {% if repo %}<a href="https://github.com/{{ repo }}#7-submitting-your-code-and-the-leaderboard">Rules &amp; how to submit</a>{% endif %}</nav>
@@ -324,10 +330,10 @@ footer{color:var(--muted);font-size:13px;padding:10px 0 40px}
 <main class="wrap">
 <section id="planning">
   <h2>AV Trajectory Planning</h2>
-  <p class="lead">Total score over every scene in the test set, 100 points each. ✕ = collision or left the road. Hover over a score to see how the run ended.</p>
+  <p class="lead">Total score over every scene in the test set, 100 points each. The baseline scenes come with the project; practice scenes don't count toward the total. ✕ = collision or left the road. Hover over a score to see how the run ended.</p>
   <div class="card scroll"><table>
     <tr><th class="sticky">#</th><th class="l sticky" style="left:48px">Team</th><th class="l">Total</th><th>Goals</th><th>Crashes</th><th title="Average time per plan() call; must stay under about 50 ms">plan() ms</th>
-    {% for s in valid %}<th class="scene">{{ s[2]|replace('_', ' ') }}<small>{{ s[1].team if s[1] else 'example' }}</small></th>{% endfor %}</tr>
+    {% for s in shown %}<th class="scene">{{ s[2]|replace('_', ' ') }}<small>{{ s[1].team if s[1] else 'practice, not counted' if s[0] == practice else 'baseline' }}</small></th>{% endfor %}</tr>
     {% set ns = namespace(rank=0) %}
     {% for r in planner_rows %}{% if not r.reference %}{% set ns.rank = ns.rank + 1 %}{% endif %}
     <tr class="{{ 'ref' if r.reference }}">
@@ -335,7 +341,7 @@ footer{color:var(--muted);font-size:13px;padding:10px 0 40px}
       <td class="l sticky team" style="left:48px">{{ r.name.split(' ')[0] }}<small>{{ 'reference' if r.reference else r.name.split(' ')[1][1:-1] }}</small></td>
       <td class="total"><b>{{ '%.1f'|format(r.total) }}</b> <span>/ {{ 100 * valid|length }}</span>
         <div class="bar"><i style="width:{{ (100 * r.total / (100 * valid|length)) if valid else 0 }}%"></i></div></td>
-      <td>{{ r.goals }}/{{ r.cells|length }}</td>
+      <td>{{ r.goals }}/{{ r.count }}</td>
       <td class="{{ 'bad' if r.crashes }}">{{ r.crashes }}</td>
       <td class="{{ 'bad' if r.ms and r.ms > 50 }}">{{ '%.1f'|format(r.ms) if r.ms is not none else '–' }}</td>
       {% for c in r.cells %}<td class="heat" style="--s:{{ c.score }}" title="{{ c.error or c.end_reason }}">{% if c.error or c.collision or c.road_departure %}<span class="x">✕</span> {% endif %}{{ '%.0f'|format(c.score) }}</td>{% endfor %}
@@ -348,11 +354,12 @@ footer{color:var(--muted);font-size:13px;padding:10px 0 40px}
 
 <section id="scenes">
   <h2>LLM-based Traffic Scene Generation</h2>
-  <p class="lead">Scene score = 100 − the planning teams' average on it, so harder scenes score higher. A scene the baseline can't solve is invalid and scores 0. Team score = average of its scenes.</p>
+  <p class="lead">Scene score = 100 − the planning teams' average on it, so harder scenes score higher. A scene the baseline can't solve is invalid and scores 0. Team score = average of its scenes. The baseline row shows the scenes that come with the project, for comparison; it is not ranked.</p>
   <div class="card scroll"><table>
     <tr><th>#</th><th class="l">Team</th><th class="l">Team score</th><th class="l">Scenes</th></tr>
-    {% for r in scene_rows %}<tr>
-      <td><span class="rank r{{ loop.index }}">{{ loop.index }}</span></td>
+    {% set ns.rank = 0 %}
+    {% for r in scene_rows %}{% if not r.reference %}{% set ns.rank = ns.rank + 1 %}{% endif %}<tr class="{{ 'ref' if r.reference }}">
+      <td>{% if r.reference %}–{% else %}<span class="rank r{{ ns.rank }}">{{ ns.rank }}</span>{% endif %}</td>
       <td class="l team">{{ r.name.split(' ')[0] }}<small>{{ r.name.split(' ')[1][1:-1] }}</small></td>
       <td class="total">{% if r.total is not none %}<b>{{ '%.1f'|format(r.total) }}</b> <span>/ 100</span>
         <div class="bar"><i style="width:{{ r.total }}%"></i></div>{% else %}<span>waiting for planning teams</span>{% endif %}</td>
@@ -362,7 +369,7 @@ footer{color:var(--muted);font-size:13px;padding:10px 0 40px}
       </div></td>
     </tr>{% endfor %}
   </table>
-  {% if not scene_rows %}<p class="empty">No scene team has uploaded scenes yet.</p>{% endif %}
+  {% if not scene_rows|rejectattr('reference')|list %}<p class="empty">No scene team has uploaded scenes yet.</p>{% endif %}
   </div>
 </section>
 

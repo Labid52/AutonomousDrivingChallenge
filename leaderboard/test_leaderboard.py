@@ -39,13 +39,18 @@ def fake_fetch(team, info, dest):
 
 score.fetch = fake_fetch
 site = tmp / "site"
-assert score.score(site) == 4 + 4                           # baseline x4 scenes + team_7 x4 scenes
+assert score.score(site) == 5 + 5                           # 3 examples + practice + team_1's scene, baseline + team_7
 
 results = json.loads((site / "results.json").read_text())
 crosswalk = results["runs"]["team_7@abcdef1|team_1@abcdef1/my_crosswalk"]["score"]
 page = (site / "index.html").read_text()
 assert "team_7<small>abcdef1</small>" in page and "team_1<small>abcdef1</small>" in page
 assert f">{100 - crosswalk:.1f}</b>" in page                # my_crosswalk's scene score
+assert "practice, not counted" in page and "/ 400<" in page  # the practice scene is shown but not in the total
+counted = sum(v["score"] for k, v in results["runs"].items() if k.startswith("team_7@") and "student_scenario/" not in k)
+assert f"<b>{counted:.1f}</b> <span>/ 400" in page
+scene_table = page.split('id="scenes"')[1]
+assert "baseline<small>reference</small>" in scene_table and 'class="rank r1">1<' in scene_table and "rank r2" not in scene_table
 assert "non-empty STUDENT_SCENARIOS" in page and "waiting for the first upload" in page
 
 os.environ["PREVIOUS_RESULTS_URL"] = (site / "results.json").as_uri()
